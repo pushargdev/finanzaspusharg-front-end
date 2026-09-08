@@ -1,7 +1,7 @@
 import React from 'react';
-import { X, Calendar, User, CheckCircle2, Clock, DollarSign, ArrowUpRight, ArrowDownLeft, FileText, Layers, Wallet } from 'lucide-react';
+import { X, Calendar, User, CheckCircle2, Clock, Trash2, ArrowUpRight, ArrowDownLeft, FileText } from 'lucide-react';
 
-export default function ProjectDetailModal({ project, isOpen, onClose, transactions, currency }) {
+export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteProject, transactions, currency }) {
   if (!isOpen || !project) return null;
 
   const projectTxs = transactions.filter(t => t.projectId === project.id);
@@ -15,7 +15,6 @@ export default function ProjectDetailModal({ project, isOpen, onClose, transacti
   const pendingUSD = project.budgetUSD - project.paidUSD;
   const paidRatio = project.budgetARS > 0 ? Math.round((project.paidARS / project.budgetARS) * 100) : 0;
 
-  // Total project expense tied to this project
   const projectExpensesARS = projectTxs
     .filter(t => t.type === 'Gasto' && t.status === 'Pagado')
     .reduce((acc, t) => acc + t.amountARS, 0);
@@ -26,6 +25,13 @@ export default function ProjectDetailModal({ project, isOpen, onClose, transacti
 
   const netMarginARS = project.paidARS - projectExpensesARS;
   const netMarginUSD = project.paidUSD - projectExpensesUSD;
+
+  const handleDelete = () => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar el proyecto "${project.name}"?`)) {
+      onDeleteProject(project.id);
+      onClose();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
@@ -47,12 +53,22 @@ export default function ProjectDetailModal({ project, isOpen, onClose, transacti
             <p className="text-xs text-slate-400 mt-1 flex items-center gap-4">
               <span>Cliente: <strong className="text-slate-200">{project.client}</strong></span>
               <span>•</span>
-              <span>Entrega: <strong className="text-slate-200">{project.deadline}</strong></span>
+              <span>Entrega: <strong className="text-slate-200">{typeof project.deadline === 'string' ? project.deadline.slice(0, 10) : new Date(project.deadline).toISOString().slice(0, 10)}</strong></span>
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDelete}
+              className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              title="Eliminar proyecto"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Eliminar</span>
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Description */}
@@ -141,7 +157,7 @@ export default function ProjectDetailModal({ project, isOpen, onClose, transacti
                     </span>
                     <div>
                       <p className="font-bold text-white">{tx.title}</p>
-                      <p className="text-[10px] text-slate-400">{tx.date} • {tx.category}</p>
+                      <p className="text-[10px] text-slate-400">{typeof tx.date === 'string' ? tx.date.slice(0, 10) : new Date(tx.date).toISOString().slice(0, 10)} • {tx.category}</p>
                     </div>
                   </div>
                   <span className={`font-extrabold ${tx.type === 'Ingreso' ? 'text-emerald-400' : 'text-rose-400'}`}>

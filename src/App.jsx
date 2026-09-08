@@ -10,7 +10,15 @@ import ProjectModal from './components/ProjectModal';
 import ProjectDetailModal from './components/ProjectDetailModal';
 
 import { INITIAL_PROJECTS, INITIAL_TRANSACTIONS } from './mockData';
-import { fetchProjects, fetchTransactions, createProject, createTransaction, updateTransactionStatus } from './services/api';
+import { 
+  fetchProjects, 
+  fetchTransactions, 
+  createProject, 
+  deleteProject,
+  createTransaction, 
+  updateTransactionStatus,
+  deleteTransaction
+} from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -41,47 +49,54 @@ export default function App() {
         fetchTransactions()
       ]);
 
-      if (Array.isArray(projData) && projData.length > 0) {
-        // Normalize MongoDB _id to id for components
+      if (Array.isArray(projData)) {
         const normalizedProjs = projData.map(p => ({ ...p, id: p._id || p.id }));
         setProjects(normalizedProjs);
       }
 
-      if (Array.isArray(txData) && txData.length > 0) {
+      if (Array.isArray(txData)) {
         const normalizedTxs = txData.map(t => ({ ...t, id: t._id || t.id }));
         setTransactions(normalizedTxs);
       }
 
       setIsLiveConnected(true);
     } catch (err) {
-      console.warn('⚠️ Render API not connected, using fallback state:', err.message);
+      console.warn('⚠️ Render API connection notice:', err.message);
       setIsLiveConnected(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handlers
-  const handleAddTransaction = async (newTx) => {
-    // Optimistic UI update
-    setTransactions([newTx, ...transactions]);
-
-    try {
-      await createTransaction(newTx);
-      loadLiveBackendData();
-    } catch (err) {
-      console.error('Error saving transaction to backend:', err);
-    }
-  };
-
+  // Handlers for Project Operations
   const handleAddProject = async (newProj) => {
     setProjects([newProj, ...projects]);
-
     try {
       await createProject(newProj);
       loadLiveBackendData();
     } catch (err) {
       console.error('Error saving project to backend:', err);
+    }
+  };
+
+  const handleDeleteProject = async (projId) => {
+    setProjects(projects.filter(p => p.id !== projId));
+    try {
+      await deleteProject(projId);
+      loadLiveBackendData();
+    } catch (err) {
+      console.error('Error deleting project from backend:', err);
+    }
+  };
+
+  // Handlers for Transaction Operations
+  const handleAddTransaction = async (newTx) => {
+    setTransactions([newTx, ...transactions]);
+    try {
+      await createTransaction(newTx);
+      loadLiveBackendData();
+    } catch (err) {
+      console.error('Error saving transaction to backend:', err);
     }
   };
 
@@ -100,7 +115,17 @@ export default function App() {
       await updateTransactionStatus(txId, targetStatus);
       loadLiveBackendData();
     } catch (err) {
-      console.error('Error updating status on backend:', err);
+      console.error('Error updating transaction status:', err);
+    }
+  };
+
+  const handleDeleteTransaction = async (txId) => {
+    setTransactions(transactions.filter(t => t.id !== txId));
+    try {
+      await deleteTransaction(txId);
+      loadLiveBackendData();
+    } catch (err) {
+      console.error('Error deleting transaction from backend:', err);
     }
   };
 
@@ -134,7 +159,7 @@ export default function App() {
           }`}>
             <span className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${isLiveConnected ? 'bg-emerald-400 animate-pulse' : 'bg-brand-purple'}`}></span>
-              <span>{isLiveConnected ? '⚡ Conectado a Render MongoDB API (En vivo)' : '💻 Modo Demo / Conectando a Backend...'}</span>
+              <span>{isLiveConnected ? '⚡ Conectado en Vivo a Render API & MongoDB' : '💻 Modo Offline / Reconectando API Render...'}</span>
             </span>
             <button
               onClick={loadLiveBackendData}
@@ -184,6 +209,7 @@ export default function App() {
                 projects={projects}
                 currency={currency}
                 onMarkPaid={handleMarkPaid}
+                onDeleteTx={handleDeleteTransaction}
                 onOpenNewTx={() => setIsNewTxOpen(true)}
               />
             </div>
@@ -217,6 +243,7 @@ export default function App() {
         project={selectedProject}
         isOpen={!!selectedProject}
         onClose={() => setSelectedProject(null)}
+        onDeleteProject={handleDeleteProject}
         transactions={transactions}
         currency={currency}
       />

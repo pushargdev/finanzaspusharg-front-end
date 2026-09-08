@@ -7,14 +7,12 @@ import {
   Download, 
   CheckCircle2, 
   Clock, 
-  FileText,
-  DollarSign,
-  Calendar,
+  Trash2,
   Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function TransactionTable({ transactions, projects, currency, onMarkPaid, onOpenNewTx }) {
+export default function TransactionTable({ transactions, projects, currency, onMarkPaid, onDeleteTx, onOpenNewTx }) {
   const [filterType, setFilterType] = useState('Todos');
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [selectedProject, setSelectedProject] = useState('Todos');
@@ -26,7 +24,7 @@ export default function TransactionTable({ transactions, projects, currency, onM
     if (selectedProject !== 'Todos' && t.projectId !== selectedProject) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const matchTitle = t.title.toLowerCase().includes(q);
+      const matchTitle = t.title?.toLowerCase().includes(q);
       const matchClient = t.client?.toLowerCase().includes(q);
       const matchCat = t.category?.toLowerCase().includes(q);
       if (!matchTitle && !matchClient && !matchCat) return false;
@@ -157,7 +155,7 @@ export default function TransactionTable({ transactions, projects, currency, onM
               <th className="py-3.5 px-4">Fecha</th>
               <th className="py-3.5 px-4 text-right">Monto</th>
               <th className="py-3.5 px-4 text-center">Estado</th>
-              <th className="py-3.5 px-4 text-center">Acción</th>
+              <th className="py-3.5 px-4 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-xs">
@@ -206,7 +204,7 @@ export default function TransactionTable({ transactions, projects, currency, onM
 
                     {/* Date */}
                     <td className="py-3.5 px-4 text-slate-400 font-medium">
-                      {tx.date}
+                      {typeof tx.date === 'string' ? tx.date.slice(0, 10) : new Date(tx.date).toISOString().slice(0, 10)}
                     </td>
 
                     {/* Amount */}
@@ -230,17 +228,24 @@ export default function TransactionTable({ transactions, projects, currency, onM
 
                     {/* Action */}
                     <td className="py-3.5 px-4 text-center">
-                      {!isPaid ? (
+                      <div className="flex items-center justify-center gap-2">
+                        {!isPaid && (
+                          <button
+                            onClick={() => handleMarkAsPaid(tx)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold text-[11px] border border-emerald-500/40 transition-all flex items-center gap-1"
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            <span>Cobrado</span>
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleMarkAsPaid(tx)}
-                          className="px-3 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold text-[11px] border border-emerald-500/40 transition-all flex items-center gap-1 mx-auto"
+                          onClick={() => onDeleteTx(tx.id)}
+                          className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          title="Eliminar movimiento"
                         >
-                          <Sparkles className="w-3 h-3" />
-                          <span>Cobrado</span>
+                          <Trash2 className="w-4 h-4" />
                         </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-500 font-semibold">OK</span>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 );
