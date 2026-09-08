@@ -16,7 +16,7 @@ import {
 export default function ProjectsGrid({ projects, currency, onSelectProject, onOpenNewProject }) {
   const [filterCategory, setFilterCategory] = useState('Todos');
 
-  const categories = ['Todos', 'Desarrollo Mobile', 'Fullstack Web', 'Branding & UI/UX', 'Desarrollo Web', 'Backend & API'];
+  const categories = ['Todos', ...Array.from(new Set(projects.map((p) => p.category).filter(Boolean)))];
 
   const filteredProjects = projects.filter(p => {
     if (filterCategory !== 'Todos' && p.category !== filterCategory) return false;

@@ -5,16 +5,34 @@ import confetti from 'canvas-confetti';
 export default function ProjectModal({ isOpen, onClose, onAddProject, rate = 1280 }) {
   if (!isOpen) return null;
 
+  const COMPONENT_PRESETS = ['Campus web', 'Desktop app', 'Landing', 'App móvil', 'API / Backend', 'Panel admin', 'E-commerce', 'Storage', 'Branding / UI'];
+
   const [name, setName] = useState('');
   const [clients, setClients] = useState([{ name: '', lastName: '' }]);
-  const [category, setCategory] = useState('Desarrollo Mobile');
   const [budgetARS, setBudgetARS] = useState('');
   const [budgetUSD, setBudgetUSD] = useState('');
   const [deadline, setDeadline] = useState('2026-12-31');
   const [description, setDescription] = useState('');
-  const [technologies, setTechnologies] = useState('');
-  const [platforms, setPlatforms] = useState('');
+  const [components, setComponents] = useState([]);
+  const [componentInput, setComponentInput] = useState('');
+  const [techTags, setTechTags] = useState([]);
+  const [techInput, setTechInput] = useState('');
   const [contributions, setContributions] = useState([{ member: '', role: '', description: '' }]);
+
+  const toggleComponent = (value) => {
+    setComponents((prev) => (prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]));
+  };
+  const addCustomComponent = () => {
+    const v = componentInput.trim();
+    if (v && !components.includes(v)) setComponents((prev) => [...prev, v]);
+    setComponentInput('');
+  };
+  const addTechTag = () => {
+    const v = techInput.trim().replace(/,$/, '');
+    if (v && !techTags.includes(v)) setTechTags((prev) => [...prev, v]);
+    setTechInput('');
+  };
+  const removeTechTag = (value) => setTechTags((prev) => prev.filter((t) => t !== value));
 
   const updateContribution = (index, field, value) => {
     setContributions((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
@@ -40,8 +58,14 @@ export default function ProjectModal({ isOpen, onClose, onAddProject, rate = 128
     const bARS = parseFloat(budgetARS) || (parseFloat(budgetUSD) * rate || 0);
     const bUSD = parseFloat(budgetUSD) || (parseFloat(budgetARS) / rate || 0);
 
-    const techArr = technologies.split(',').map((t) => t.trim()).filter(Boolean);
-    const platformArr = platforms.split(',').map((p) => p.trim()).filter(Boolean);
+    // Fold a half-typed tech/component still in the input into the arrays.
+    const pendingTech = techInput.trim().replace(/,$/, '');
+    const techArr = pendingTech && !techTags.includes(pendingTech) ? [...techTags, pendingTech] : techTags;
+    const pendingComp = componentInput.trim();
+    const platformArr = pendingComp && !components.includes(pendingComp) ? [...components, pendingComp] : components;
+
+    const category = platformArr.length === 0 ? 'General' : platformArr.length === 1 ? platformArr[0] : 'Varios';
+
     const contribArr = contributions
       .map((c) => ({ member: c.member.trim(), role: c.role.trim(), description: c.description.trim() }))
       .filter((c) => c.member);
@@ -142,18 +166,52 @@ export default function ProjectModal({ isOpen, onClose, onAddProject, rate = 128
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">Categoría Técnica</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2.5 bg-[#171F33] border border-slate-800 rounded-xl text-white outline-none focus:border-brand-purple"
-            >
-              <option value="Desarrollo Mobile">Desarrollo Mobile</option>
-              <option value="Fullstack Web">Fullstack Web</option>
-              <option value="Branding & UI/UX">Branding & UI/UX</option>
-              <option value="Desarrollo Web">Desarrollo Web</option>
-              <option value="Backend & API">Backend & API</option>
-            </select>
+            <label className="block text-slate-300 font-semibold mb-1">Componentes del proyecto</label>
+            <p className="text-[10px] text-slate-500 mb-2">Qué incluye el proyecto. Tocá los que apliquen (podés elegir varios).</p>
+            <div className="flex flex-wrap gap-1.5">
+              {COMPONENT_PRESETS.map((c) => {
+                const active = components.includes(c);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => toggleComponent(c)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                      active
+                        ? 'bg-brand-magenta/20 text-brand-magenta border-brand-magenta/40'
+                        : 'bg-[#171F33] text-slate-300 border-slate-800 hover:border-slate-600'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+            {components.filter((c) => !COMPONENT_PRESETS.includes(c)).map((c) => (
+              <span key={c} className="inline-flex items-center gap-1 mt-2 mr-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-brand-magenta/20 text-brand-magenta border border-brand-magenta/40">
+                {c}
+                <button type="button" onClick={() => toggleComponent(c)} className="hover:text-white">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={componentInput}
+                onChange={(e) => setComponentInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomComponent(); } }}
+                placeholder="Otro componente..."
+                className="flex-1 px-2.5 py-2 bg-[#171F33] border border-slate-800 rounded-lg text-white outline-none focus:border-brand-purple"
+              />
+              <button
+                type="button"
+                onClick={addCustomComponent}
+                className="px-2.5 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -200,29 +258,29 @@ export default function ProjectModal({ isOpen, onClose, onAddProject, rate = 128
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-slate-300 font-semibold mb-1">Tecnologías</label>
-              <input
-                type="text"
-                value={technologies}
-                onChange={(e) => setTechnologies(e.target.value)}
-                placeholder="React, Node, MongoDB, Electron"
-                className="w-full px-3.5 py-2.5 bg-[#171F33] border border-slate-800 rounded-xl text-white outline-none focus:border-brand-purple"
-              />
-              <p className="text-[10px] text-slate-500 mt-1">Separadas por coma</p>
-            </div>
-            <div>
-              <label className="block text-slate-300 font-semibold mb-1">Plataformas</label>
-              <input
-                type="text"
-                value={platforms}
-                onChange={(e) => setPlatforms(e.target.value)}
-                placeholder="Desktop app, Campus web"
-                className="w-full px-3.5 py-2.5 bg-[#171F33] border border-slate-800 rounded-xl text-white outline-none focus:border-brand-purple"
-              />
-              <p className="text-[10px] text-slate-500 mt-1">Separadas por coma</p>
-            </div>
+          <div>
+            <label className="block text-slate-300 font-semibold mb-1">Tecnologías</label>
+            <p className="text-[10px] text-slate-500 mb-2">Stack usado. Escribí y Enter (o coma) para agregar cada una.</p>
+            {techTags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {techTags.map((t) => (
+                  <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-brand-purple/20 text-brand-purple border border-brand-purple/40">
+                    {t}
+                    <button type="button" onClick={() => removeTechTag(t)} className="hover:text-white">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <input
+              type="text"
+              value={techInput}
+              onChange={(e) => setTechInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTechTag(); } }}
+              placeholder="Ej: React, Node, Bunny Storage, MongoDB, Electron..."
+              className="w-full px-3.5 py-2.5 bg-[#171F33] border border-slate-800 rounded-xl text-white outline-none focus:border-brand-purple"
+            />
           </div>
 
           <div className="space-y-2">
