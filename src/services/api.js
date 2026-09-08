@@ -76,6 +76,16 @@ export async function updateProject(id, projectData) {
   return res.json();
 }
 
+export async function registerPayment(projectId, paymentData) {
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/payments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(paymentData),
+  });
+  if (!res.ok) throw new Error('Error al registrar el pago');
+  return res.json();
+}
+
 export async function deleteProject(id) {
   const res = await fetch(`${API_BASE_URL}/projects/${id}`, {
     method: 'DELETE',
@@ -126,6 +136,13 @@ export async function deleteTransaction(id) {
 export async function fetchDolar() {
   const res = await fetch(`${API_BASE_URL}/dolar`);
   if (!res.ok) throw new Error('Error al obtener cotización del dólar');
+  return res.json();
+}
+
+// Dólar histórico para una fecha pasada (YYYY-MM-DD)
+export async function fetchDolarByDate(date) {
+  const res = await fetch(`${API_BASE_URL}/dolar/historico/${date}`);
+  if (!res.ok) throw new Error('Sin cotización para esa fecha');
   return res.json();
 }
 

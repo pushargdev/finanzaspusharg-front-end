@@ -8,6 +8,7 @@ import TransactionTable from './components/TransactionTable';
 import TransactionModal from './components/TransactionModal';
 import ProjectModal from './components/ProjectModal';
 import ProjectDetailModal from './components/ProjectDetailModal';
+import PaymentModal from './components/PaymentModal';
 import LoginScreen from './components/LoginScreen';
 import UserSettings from './components/UserSettings';
 import ClientsView from './components/ClientsView';
@@ -21,7 +22,8 @@ import {
   createTransaction,
   updateTransactionStatus,
   deleteTransaction,
-  fetchDolar
+  fetchDolar,
+  registerPayment
 } from './services/api';
 
 export default function App() {
@@ -49,6 +51,7 @@ export default function App() {
   const [isNewTxOpen, setIsNewTxOpen] = useState(false);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [payingProject, setPayingProject] = useState(null);
 
   // Fetch real-time data from Render API on mount if logged in
   useEffect(() => {
@@ -130,6 +133,13 @@ export default function App() {
     } catch (err) {
       console.error('Error deleting project from backend:', err);
     }
+  };
+
+  const handleRegisterPayment = async (paymentData) => {
+    if (!payingProject) return;
+    const projId = payingProject._id || payingProject.id;
+    await registerPayment(projId, paymentData);
+    await loadLiveBackendData();
   };
 
   // Handlers for Transaction Operations
@@ -317,9 +327,18 @@ export default function App() {
         isOpen={!!selectedProject}
         onClose={() => setSelectedProject(null)}
         onDeleteProject={handleDeleteProject}
+        onRegisterPayment={(proj) => setPayingProject(proj)}
         transactions={transactions}
         currency={currency}
         rate={dolarRate}
+      />
+
+      <PaymentModal
+        isOpen={!!payingProject}
+        project={payingProject}
+        onClose={() => setPayingProject(null)}
+        onSubmit={handleRegisterPayment}
+        fallbackRate={dolarRate}
       />
     </div>
   );

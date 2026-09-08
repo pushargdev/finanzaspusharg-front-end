@@ -1,7 +1,7 @@
 import React from 'react';
-import { X, Calendar, User, CheckCircle2, Clock, Trash2, ArrowUpRight, ArrowDownLeft, FileText, Cpu, Layers, Users } from 'lucide-react';
+import { X, Calendar, User, CheckCircle2, Clock, Trash2, ArrowUpRight, ArrowDownLeft, FileText, Cpu, Layers, Users, DollarSign } from 'lucide-react';
 
-export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteProject, transactions, currency, rate = 1280 }) {
+export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteProject, onRegisterPayment, transactions, currency, rate = 1280 }) {
   if (!isOpen || !project) return null;
 
   const projectTxs = transactions.filter(t => t.projectId === project.id);
@@ -63,6 +63,16 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {onRegisterPayment && (
+              <button
+                onClick={() => onRegisterPayment(project)}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                title="Registrar un pago"
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Registrar Pago</span>
+              </button>
+            )}
             <button
               onClick={handleDelete}
               className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
