@@ -91,7 +91,7 @@ export default function ProjectModal({ isOpen, onClose, onAddProject, rate = 128
       platforms: platformArr,
       contributions: contribArr,
       milestones: [
-        { name: 'Anticipo 50%', amountARS: Math.round(bARS * 0.5), status: 'Pendiente', date: deadline }
+        { name: 'Anticipo 50%', amountARS: Math.round(bARS * 0.5), amountUSD: Math.round(bUSD * 0.5), status: 'Pendiente', date: deadline }
       ]
     };
 
@@ -102,7 +102,7 @@ export default function ProjectModal({ isOpen, onClose, onAddProject, rate = 128
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg bg-[#121827] border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
+      <div className="w-full max-w-lg bg-[#121827] border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 relative max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-brand-purple" />
