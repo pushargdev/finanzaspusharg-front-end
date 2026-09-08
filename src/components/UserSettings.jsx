@@ -4,6 +4,7 @@ import { updateUserProfile } from '../services/api';
 
 export default function UserSettings({ currentUser, setCurrentUser }) {
   const [name, setName] = useState(currentUser?.name || 'pushArg Studio Admin');
+  const [alias, setAlias] = useState(currentUser?.alias || '');
   const [email, setEmail] = useState(currentUser?.email || 'admin@pusharg.com');
   const [password, setPassword] = useState('');
   const [defaultCurrency, setDefaultCurrency] = useState(currentUser?.defaultCurrency || 'ARS');
@@ -18,8 +19,8 @@ export default function UserSettings({ currentUser, setCurrentUser }) {
 
     try {
       const updated = await updateUserProfile({
-        userId: currentUser?._id,
         name,
+        alias,
         email,
         password: password || undefined,
         defaultCurrency,
@@ -35,6 +36,7 @@ export default function UserSettings({ currentUser, setCurrentUser }) {
       const updatedLocal = {
         ...currentUser,
         name,
+        alias,
         email,
         defaultCurrency,
         dolarBlueRate: parseFloat(dolarBlueRate) || 1280
@@ -58,7 +60,7 @@ export default function UserSettings({ currentUser, setCurrentUser }) {
             </div>
           </div>
           <div>
-            <h2 className="text-xl font-extrabold text-white">{name}</h2>
+            <h2 className="text-xl font-extrabold text-white">{name}{alias ? <span className="text-slate-400 font-semibold text-base"> · {alias}</span> : null}</h2>
             <p className="text-xs text-slate-400">{email} • Rol: Admin Corporativo</p>
           </div>
         </div>
@@ -91,6 +93,16 @@ export default function UserSettings({ currentUser, setCurrentUser }) {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-[#171F33] border border-slate-800 rounded-xl text-white outline-none focus:border-brand-purple"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Alias / Apodo</label>
+              <input
+                type="text"
+                value={alias}
+                onChange={(e) => setAlias(e.target.value)}
+                placeholder="Ej: Nico, Cristo, Chupe..."
                 className="w-full px-3.5 py-2.5 bg-[#171F33] border border-slate-800 rounded-xl text-white outline-none focus:border-brand-purple"
               />
             </div>

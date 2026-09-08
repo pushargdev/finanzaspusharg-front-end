@@ -28,8 +28,9 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNe
   ];
 
   const userName = currentUser?.name || 'pushArg Studio';
+  const userAlias = currentUser?.alias || '';
   const userEmail = currentUser?.email || 'admin@pusharg.com';
-  const userInitials = userName.slice(0, 2).toUpperCase();
+  const userInitials = (userAlias || userName).slice(0, 2).toUpperCase();
 
   return (
     <aside className="w-72 bg-[#0E1322] border-r border-[#1E293B] flex flex-col justify-between shrink-0 select-none">
@@ -135,7 +136,9 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNe
               </div>
             </div>
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-slate-200 truncate">{userName}</p>
+              <p className="text-xs font-bold text-slate-200 truncate">
+                {userName}{userAlias ? <span className="text-slate-400 font-semibold"> · {userAlias}</span> : null}
+              </p>
               <p className="text-[10px] text-slate-400 truncate">{userEmail}</p>
             </div>
           </div>
