@@ -7,6 +7,7 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [signupCode, setSignupCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +20,7 @@ export default function LoginScreen({ onLoginSuccess }) {
       let userData;
       if (isRegistering) {
         if (!name || !email || !password) throw new Error('Completa todos los campos');
-        userData = await registerUser(name, email, password);
+        userData = await registerUser(name, email, password, signupCode);
       } else {
         if (!email || !password) throw new Error('Completa tu email y contraseña');
         userData = await loginUser(email, password);
@@ -153,6 +154,22 @@ export default function LoginScreen({ onLoginSuccess }) {
               />
             </div>
           </div>
+
+          {isRegistering && (
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Código de Invitación</label>
+              <div className="relative">
+                <ShieldCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={signupCode}
+                  onChange={(e) => setSignupCode(e.target.value)}
+                  placeholder="Código provisto por el equipo"
+                  className="w-full pl-10 pr-4 py-3 bg-[#171F33] border border-slate-800 rounded-xl text-white outline-none focus:border-brand-purple"
+                />
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"
