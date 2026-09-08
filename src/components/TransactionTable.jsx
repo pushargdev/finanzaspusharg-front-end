@@ -21,7 +21,7 @@ export default function TransactionTable({ transactions, projects, currency, onM
   const filteredTransactions = transactions.filter(t => {
     if (filterType !== 'Todos' && t.type !== filterType) return false;
     if (filterStatus !== 'Todos' && t.status !== filterStatus) return false;
-    if (selectedProject !== 'Todos' && t.projectId !== selectedProject) return false;
+    if (selectedProject !== 'Todos' && (t.projectId === selectedProject || (t.projectId && t.projectId._id === selectedProject))) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchTitle = t.title?.toLowerCase().includes(q);
@@ -32,9 +32,23 @@ export default function TransactionTable({ transactions, projects, currency, onM
     return true;
   });
 
-  const formatMoney = (valARS, valUSD) => {
-    if (currency === 'USD') return `$${valUSD.toLocaleString('en-US')} USD`;
-    return `$${valARS.toLocaleString('es-AR')} ARS`;
+  const formatDualMoney = (valARS, valUSD) => {
+    const strARS = `$${Math.round(valARS || 0).toLocaleString('es-AR')} ARS`;
+    const strUSD = `$${Math.round(valUSD || 0).toLocaleString('en-US')} USD`;
+    if (currency === 'USD') {
+      return (
+        <div>
+          <span className="font-extrabold text-sm block">{strUSD}</span>
+          <span className="text-[10px] text-slate-400 font-medium block">{strARS}</span>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <span className="font-extrabold text-sm block">{strARS}</span>
+        <span className="text-[10px] text-slate-400 font-medium block">{strUSD}</span>
+      </div>
+    );
   };
 
   const triggerConfetti = () => {
@@ -46,14 +60,14 @@ export default function TransactionTable({ transactions, projects, currency, onM
   };
 
   const handleMarkAsPaid = (tx) => {
-    onMarkPaid(tx.id);
+    onMarkPaid(tx.id || tx._id);
     triggerConfetti();
   };
 
   const exportToCSV = () => {
-    const headers = ['ID', 'Fecha', 'Tipo', 'Título', 'Proyecto', 'Cliente', 'Categoría', 'Monto ARS', 'Monto USD', 'Estado'];
+    const headers = ['ID', 'Fecha', 'Tipo', 'Título', 'Proyecto', 'Cliente', 'Categoría', 'Monto ARS', 'Monto USD', 'Dólar Fecha', 'Estado'];
     const rows = filteredTransactions.map(t => [
-      t.id,
+      t.id || t._id,
       t.date,
       t.type,
       `"${t.title}"`,
@@ -62,6 +76,7 @@ export default function TransactionTable({ transactions, projects, currency, onM
       t.category,
       t.amountARS,
       t.amountUSD,
+      t.exchangeRate || '',
       t.status
     ]);
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
@@ -115,7 +130,7 @@ export default function TransactionTable({ transactions, projects, currency, onM
           >
             <option value="Todos">Todos los Proyectos</option>
             {projects.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>
             ))}
           </select>
         </div>
@@ -152,8 +167,8 @@ export default function TransactionTable({ transactions, projects, currency, onM
               <th className="py-3.5 px-4">Movimiento</th>
               <th className="py-3.5 px-4">Proyecto / Cliente</th>
               <th className="py-3.5 px-4">Categoría</th>
-              <th className="py-3.5 px-4">Fecha</th>
-              <th className="py-3.5 px-4 text-right">Monto</th>
+              <th className="py-3.5 px-4">Fecha & Cotización</th>
+              <th className="py-3.5 px-4 text-right">Monto (ARS / USD)</th>
               <th className="py-3.5 px-4 text-center">Estado</th>
               <th className="py-3.5 px-4 text-center">Acciones</th>
             </tr>
@@ -169,9 +184,10 @@ export default function TransactionTable({ transactions, projects, currency, onM
               filteredTransactions.map((tx) => {
                 const isIncome = tx.type === 'Ingreso';
                 const isPaid = tx.status === 'Cobrado' || tx.status === 'Pagado';
+                const txId = tx.id || tx._id;
 
                 return (
-                  <tr key={tx.id} className="hover:bg-[#171F33]/60 transition-colors">
+                  <tr key={txId} className="hover:bg-[#171F33]/60 transition-colors">
                     {/* Movement Title & Icon */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
@@ -202,16 +218,21 @@ export default function TransactionTable({ transactions, projects, currency, onM
                       </span>
                     </td>
 
-                    {/* Date */}
+                    {/* Date & Rate */}
                     <td className="py-3.5 px-4 text-slate-400 font-medium">
-                      {typeof tx.date === 'string' ? tx.date.slice(0, 10) : new Date(tx.date).toISOString().slice(0, 10)}
+                      <div>
+                        <span>{typeof tx.date === 'string' ? tx.date.slice(0, 10) : new Date(tx.date).toISOString().slice(0, 10)}</span>
+                        {tx.exchangeRate ? (
+                          <span className="text-[10px] text-slate-500 block">Dólar: ${tx.exchangeRate.toLocaleString('es-AR')}</span>
+                        ) : null}
+                      </div>
                     </td>
 
                     {/* Amount */}
                     <td className="py-3.5 px-4 text-right">
-                      <span className={`font-extrabold text-sm ${isIncome ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {isIncome ? '+' : '-'}{formatMoney(tx.amountARS, tx.amountUSD)}
-                      </span>
+                      <div className={isIncome ? 'text-emerald-400' : 'text-rose-400'}>
+                        {formatDualMoney(tx.amountARS, tx.amountUSD)}
+                      </div>
                     </td>
 
                     {/* Status */}
@@ -239,7 +260,7 @@ export default function TransactionTable({ transactions, projects, currency, onM
                           </button>
                         )}
                         <button
-                          onClick={() => onDeleteTx(tx.id)}
+                          onClick={() => onDeleteTx(txId)}
                           className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                           title="Eliminar movimiento"
                         >

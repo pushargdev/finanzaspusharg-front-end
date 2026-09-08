@@ -4,16 +4,28 @@ import { X, Calendar, User, CheckCircle2, Clock, Trash2, ArrowUpRight, ArrowDown
 export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteProject, onRegisterPayment, transactions, currency, rate = 1280 }) {
   if (!isOpen || !project) return null;
 
-  const projectTxs = transactions.filter(t => t.projectId === project.id);
+  const projectTxs = transactions.filter(t => t.projectId === (project._id || project.id));
 
-  const formatMoney = (valARS, valUSD) => {
-    if (currency === 'USD') return `$${valUSD.toLocaleString('en-US')} USD`;
-    return `$${valARS.toLocaleString('es-AR')} ARS`;
+  const formatDualMoney = (valARS, valUSD) => {
+    const strARS = `$${Math.round(valARS || 0).toLocaleString('es-AR')} ARS`;
+    const strUSD = `$${Math.round(valUSD || 0).toLocaleString('en-US')} USD`;
+    return (
+      <div>
+        <span className="font-extrabold text-white text-base block">{currency === 'USD' ? strUSD : strARS}</span>
+        <span className="text-[11px] text-slate-400 font-medium block">{currency === 'USD' ? strARS : strUSD}</span>
+      </div>
+    );
   };
 
-  const pendingARS = project.budgetARS - project.paidARS;
-  const pendingUSD = project.budgetUSD - project.paidUSD;
-  const paidRatio = project.budgetARS > 0 ? Math.round((project.paidARS / project.budgetARS) * 100) : 0;
+  const pendingARS = Math.max(0, project.budgetARS - project.paidARS);
+  const pendingUSD = Math.max(0, project.budgetUSD - project.paidUSD);
+
+  const rawRatio = currency === 'USD'
+    ? (project.budgetUSD > 0 ? (project.paidUSD / project.budgetUSD) * 100 : 0)
+    : (project.budgetARS > 0 ? (project.paidARS / project.budgetARS) * 100 : 0);
+
+  const isFullyPaid = pendingUSD <= 0 || pendingARS <= 0 || rawRatio >= 99.5;
+  const paidRatio = isFullyPaid ? 100 : Math.min(Math.round(rawRatio), 100);
 
   const projectExpensesARS = projectTxs
     .filter(t => t.type === 'Gasto' && t.status === 'Pagado')
@@ -45,8 +57,8 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
               <span className="px-2.5 py-0.5 rounded-md bg-brand-purple/20 text-brand-purple text-[10px] font-bold uppercase tracking-wider">
                 {project.category}
               </span>
-              <span className="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-bold">
-                {project.status}
+              <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold ${isFullyPaid ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-300'}`}>
+                {isFullyPaid ? 'Completado (100% Cobrado)' : project.status}
               </span>
             </div>
             <h2 className="text-2xl font-extrabold text-white">{project.name}</h2>
@@ -63,7 +75,7 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {onRegisterPayment && (
+            {onRegisterPayment && !isFullyPaid && (
               <button
                 onClick={() => onRegisterPayment(project)}
                 className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
@@ -92,122 +104,26 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
           {project.description}
         </p>
 
-        {/* Platforms & Technologies */}
-        {((project.platforms && project.platforms.length > 0) || (project.technologies && project.technologies.length > 0)) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {project.platforms && project.platforms.length > 0 && (
-              <div className="p-4 rounded-xl bg-[#171F33] border border-slate-800">
-                <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5 mb-2">
-                  <Layers className="w-3.5 h-3.5 text-brand-magenta" /> Plataformas
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {project.platforms.map((p, i) => (
-                    <span key={i} className="px-2.5 py-1 rounded-md bg-brand-magenta/15 text-brand-magenta text-[11px] font-semibold">{p}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {project.technologies && project.technologies.length > 0 && (
-              <div className="p-4 rounded-xl bg-[#171F33] border border-slate-800">
-                <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5 mb-2">
-                  <Cpu className="w-3.5 h-3.5 text-brand-purple" /> Tecnologías
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {project.technologies.map((t, i) => (
-                    <span key={i} className="px-2.5 py-1 rounded-md bg-brand-purple/15 text-brand-purple text-[11px] font-semibold">{t}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Contributions */}
-        {project.contributions && project.contributions.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-brand-purple" />
-              <span>Aportes del Equipo</span>
-            </h3>
-            <div className="space-y-2">
-              {project.contributions.map((c, idx) => (
-                <div key={idx} className="flex items-start justify-between p-3 rounded-xl bg-[#171F33] border border-slate-800 text-xs gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-7 h-7 shrink-0 rounded-lg bg-brand-purple/20 text-brand-purple flex items-center justify-center font-bold uppercase">
-                      {c.member?.charAt(0) || '?'}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="font-bold text-white truncate">{c.member}</p>
-                      {c.description && <p className="text-[10px] text-slate-400 truncate">{c.description}</p>}
-                    </div>
-                  </div>
-                  {c.role && (
-                    <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-bold text-[10px] shrink-0">{c.role}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Financial KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="p-4 rounded-xl bg-[#171F33] border border-slate-800">
             <span className="text-[11px] text-slate-400 font-semibold block mb-1">Presupuesto Total</span>
-            <span className="text-lg font-extrabold text-white">
-              {formatMoney(project.budgetARS, project.budgetUSD)}
-            </span>
+            {formatDualMoney(project.budgetARS, project.budgetUSD)}
           </div>
 
           <div className="p-4 rounded-xl bg-[#171F33] border border-emerald-500/30">
             <span className="text-[11px] text-emerald-400 font-semibold block mb-1">Cobrado ({paidRatio}%)</span>
-            <span className="text-lg font-extrabold text-emerald-400">
-              {formatMoney(project.paidARS, project.paidUSD)}
-            </span>
+            {formatDualMoney(project.paidARS, project.paidUSD)}
           </div>
 
           <div className="p-4 rounded-xl bg-[#171F33] border border-amber-500/30">
             <span className="text-[11px] text-amber-400 font-semibold block mb-1">Pendiente de Cobro</span>
-            <span className="text-lg font-extrabold text-amber-400">
-              {formatMoney(pendingARS, pendingUSD)}
-            </span>
+            {formatDualMoney(pendingARS, pendingUSD)}
           </div>
 
           <div className="p-4 rounded-xl bg-[#171F33] border border-brand-purple/30">
             <span className="text-[11px] text-brand-purple font-semibold block mb-1">Ganancia Neta Est.</span>
-            <span className="text-lg font-extrabold text-brand-purple">
-              {formatMoney(netMarginARS, netMarginUSD)}
-            </span>
-          </div>
-        </div>
-
-        {/* Milestones Section */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-brand-magenta" />
-            <span>Hitos de Pago & Entregables</span>
-          </h3>
-          <div className="space-y-2">
-            {project.milestones && project.milestones.map((m, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[#171F33] border border-slate-800 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <span className={`w-2 h-2 rounded-full ${m.status === 'Cobrado' ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-                  <span className="font-semibold text-slate-200">{m.name}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-extrabold text-white">
-                    {formatMoney(m.amountARS, Math.round(m.amountARS / rate))}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                    m.status === 'Cobrado' 
-                      ? 'bg-emerald-500/20 text-emerald-400' 
-                      : 'bg-amber-500/20 text-amber-400'
-                  }`}>
-                    {m.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {formatDualMoney(netMarginARS, netMarginUSD)}
           </div>
         </div>
 
@@ -215,28 +131,36 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
         <div className="space-y-3">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <FileText className="w-4 h-4 text-brand-purple" />
-            <span>Movimientos Vinculados a este Proyecto</span>
+            <span>Pagos Registrados & Movimientos ({projectTxs.length})</span>
           </h3>
           {projectTxs.length === 0 ? (
-            <p className="text-xs text-slate-500 text-center py-4">No hay movimientos registrados para este proyecto.</p>
+            <p className="text-xs text-slate-500 text-center py-4">No hay pagos registrados para este proyecto.</p>
           ) : (
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
               {projectTxs.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-[#171F33] border border-slate-800 text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                <div key={tx.id} className="flex items-center justify-between p-3.5 rounded-xl bg-[#171F33] border border-slate-800 text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${
                       tx.type === 'Ingreso' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
                     }`}>
-                      {tx.type === 'Ingreso' ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownLeft className="w-3.5 h-3.5" />}
+                      {tx.type === 'Ingreso' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownLeft className="w-4 h-4" />}
                     </span>
                     <div>
-                      <p className="font-bold text-white">{tx.title}</p>
-                      <p className="text-[10px] text-slate-400">{typeof tx.date === 'string' ? tx.date.slice(0, 10) : new Date(tx.date).toISOString().slice(0, 10)} • {tx.category}</p>
+                      <p className="font-bold text-white text-xs">{tx.title}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {typeof tx.date === 'string' ? tx.date.slice(0, 10) : new Date(tx.date).toISOString().slice(0, 10)} 
+                        {tx.exchangeRate ? ` • Dólar a esa fecha: $${tx.exchangeRate.toLocaleString('es-AR')} ARS` : ''}
+                      </p>
                     </div>
                   </div>
-                  <span className={`font-extrabold ${tx.type === 'Ingreso' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {tx.type === 'Ingreso' ? '+' : '-'}{formatMoney(tx.amountARS, tx.amountUSD)}
-                  </span>
+                  <div className="text-right">
+                    <span className={`font-extrabold text-sm block ${tx.type === 'Ingreso' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {tx.type === 'Ingreso' ? '+' : '-'}${Math.round(tx.amountARS || 0).toLocaleString('es-AR')} ARS
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold block">
+                      ${Math.round(tx.amountUSD || 0).toLocaleString('en-US')} USD
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

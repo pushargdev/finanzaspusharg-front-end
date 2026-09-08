@@ -7,48 +7,58 @@ import {
   Clock, 
   AlertCircle, 
   Plus, 
-  ChevronRight, 
-  DollarSign,
-  TrendingUp,
-  Layers
+  ChevronRight
 } from 'lucide-react';
 
 export default function ProjectsGrid({ projects, currency, onSelectProject, onOpenNewProject }) {
   const [filterCategory, setFilterCategory] = useState('Todos');
 
-  const categories = ['Todos', ...Array.from(new Set(projects.map((p) => p.category).filter(Boolean)))];
+  const categories = ['Todos', 'Desarrollo Mobile', 'Fullstack Web', 'Branding & UI/UX', 'Desarrollo Web', 'Backend & API'];
 
   const filteredProjects = projects.filter(p => {
     if (filterCategory !== 'Todos' && p.category !== filterCategory) return false;
     return true;
   });
 
-  const formatMoney = (valARS, valUSD) => {
-    if (currency === 'USD') return `$${valUSD.toLocaleString('en-US')} USD`;
-    return `$${valARS.toLocaleString('es-AR')} ARS`;
+  const formatDualMoney = (valARS, valUSD) => {
+    const strARS = `$${Math.round(valARS || 0).toLocaleString('es-AR')} ARS`;
+    const strUSD = `$${Math.round(valUSD || 0).toLocaleString('en-US')} USD`;
+    if (currency === 'USD') {
+      return (
+        <div>
+          <span className="font-extrabold text-white text-sm">{strUSD}</span>
+          <span className="text-[10px] text-slate-400 block font-normal">{strARS}</span>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <span className="font-extrabold text-white text-sm">{strARS}</span>
+        <span className="text-[10px] text-slate-400 block font-normal">{strUSD}</span>
+      </div>
+    );
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Completado':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Completado
-          </span>
-        );
-      case 'Pendiente Pago':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <AlertCircle className="w-3.5 h-3.5" /> Pendiente Pago
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-brand-purple/15 text-brand-purple border border-brand-purple/30">
-            <Clock className="w-3.5 h-3.5" /> En Curso
-          </span>
-        );
+  const getStatusBadge = (status, isFullyPaid) => {
+    if (isFullyPaid || status === 'Completado') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <CheckCircle2 className="w-3.5 h-3.5" /> Completado
+        </span>
+      );
     }
+    if (status === 'Pendiente Pago') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <AlertCircle className="w-3.5 h-3.5" /> Pendiente Pago
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-brand-purple/15 text-brand-purple border border-brand-purple/30">
+        <Clock className="w-3.5 h-3.5" /> En Curso
+      </span>
+    );
   };
 
   return (
@@ -83,9 +93,15 @@ export default function ProjectsGrid({ projects, currency, onSelectProject, onOp
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProjects.map((project) => {
-          const paidRatio = project.budgetARS > 0 ? (project.paidARS / project.budgetARS) * 100 : 0;
-          const pendingARS = project.budgetARS - project.paidARS;
-          const pendingUSD = project.budgetUSD - project.paidUSD;
+          const pendingARS = Math.max(0, project.budgetARS - project.paidARS);
+          const pendingUSD = Math.max(0, project.budgetUSD - project.paidUSD);
+
+          const rawRatio = currency === 'USD'
+            ? (project.budgetUSD > 0 ? (project.paidUSD / project.budgetUSD) * 100 : 0)
+            : (project.budgetARS > 0 ? (project.paidARS / project.budgetARS) * 100 : 0);
+
+          const isFullyPaid = pendingUSD <= 0 || pendingARS <= 0 || rawRatio >= 99.5;
+          const paidRatio = isFullyPaid ? 100 : Math.min(Math.round(rawRatio), 100);
 
           return (
             <div
@@ -101,7 +117,7 @@ export default function ProjectsGrid({ projects, currency, onSelectProject, onOp
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800/80 px-2.5 py-0.5 rounded-md border border-slate-700/50">
                     {project.category}
                   </span>
-                  {getStatusBadge(project.status)}
+                  {getStatusBadge(project.status, isFullyPaid)}
                 </div>
 
                 {/* Title & Client */}
@@ -117,29 +133,31 @@ export default function ProjectsGrid({ projects, currency, onSelectProject, onOp
                 <div className="mb-4 space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-semibold">
                     <span className="text-slate-400">Cobrado</span>
-                    <span className="text-brand-purple">{Math.round(paidRatio)}%</span>
+                    <span className={paidRatio === 100 ? 'text-emerald-400 font-extrabold' : 'text-brand-purple'}>
+                      {paidRatio}%
+                    </span>
                   </div>
                   <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
                     <div
-                      className="h-full bg-gradient-to-r from-brand-violet to-brand-magenta rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(paidRatio, 100)}%` }}
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        paidRatio === 100 
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-400' 
+                          : 'bg-gradient-to-r from-brand-violet to-brand-magenta'
+                      }`}
+                      style={{ width: `${paidRatio}%` }}
                     ></div>
                   </div>
                 </div>
 
-                {/* Financial Summary */}
+                {/* Dual Currency Financial Summary */}
                 <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[#171F33] border border-slate-800 text-xs mb-4">
                   <div>
                     <span className="text-[11px] text-slate-400 block font-medium">Presupuesto Total</span>
-                    <span className="font-extrabold text-white text-sm">
-                      {formatMoney(project.budgetARS, project.budgetUSD)}
-                    </span>
+                    {formatDualMoney(project.budgetARS, project.budgetUSD)}
                   </div>
                   <div>
                     <span className="text-[11px] text-slate-400 block font-medium">Pendiente</span>
-                    <span className={`font-extrabold text-sm ${pendingARS > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                      {formatMoney(pendingARS, pendingUSD)}
-                    </span>
+                    {formatDualMoney(pendingARS, pendingUSD)}
                   </div>
                 </div>
               </div>
@@ -148,7 +166,7 @@ export default function ProjectsGrid({ projects, currency, onSelectProject, onOp
               <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Entrega: {project.deadline}</span>
+                  <span>Entrega: {typeof project.deadline === 'string' ? project.deadline.slice(0, 10) : new Date(project.deadline).toISOString().slice(0, 10)}</span>
                 </span>
                 <span className="text-brand-purple font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   Ver detalle <ChevronRight className="w-3.5 h-3.5" />
