@@ -26,6 +26,7 @@ export default function PaymentModal({ isOpen, onClose, project, onSubmit, fallb
       setAmountUSD('');
       setNote('');
       setDate(today());
+      setSaving(false);
       lastEdited.current = null;
     }
   }, [isOpen]);
@@ -83,6 +84,7 @@ export default function PaymentModal({ isOpen, onClose, project, onSubmit, fallb
         note: note.trim(),
       });
       confetti({ particleCount: 80, spread: 70, origin: { y: 0.5 } });
+      setSaving(false);
       onClose();
     } catch (err) {
       setSaving(false);
