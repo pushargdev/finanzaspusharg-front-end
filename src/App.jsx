@@ -23,7 +23,8 @@ import {
   updateTransactionStatus,
   deleteTransaction,
   fetchDolar,
-  registerPayment
+  registerPayment,
+  wakeBackend
 } from './services/api';
 
 export default function App() {
@@ -52,6 +53,11 @@ export default function App() {
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [payingProject, setPayingProject] = useState(null);
+
+  // Wake the (sleeping) Render backend as soon as the app loads.
+  useEffect(() => {
+    wakeBackend();
+  }, []);
 
   // Fetch real-time data from Render API on mount if logged in
   useEffect(() => {
@@ -116,12 +122,17 @@ export default function App() {
 
   // Handlers for Project Operations
   const handleAddProject = async (newProj) => {
-    setProjects([newProj, ...projects]);
+    // Optimistic add, but roll back and warn if the save actually fails
+    // (e.g. Render free tier waking up), so we never leave a phantom card
+    // with a temporary id that can't be paid or edited.
+    setProjects((prev) => [newProj, ...prev]);
     try {
       await createProject(newProj);
-      loadLiveBackendData();
+      await loadLiveBackendData();
     } catch (err) {
       console.error('Error saving project to backend:', err);
+      setProjects((prev) => prev.filter((p) => p.id !== newProj.id));
+      alert('No se pudo guardar el proyecto. El servidor puede estar iniciando (se duerme tras un rato sin uso). Esperá unos segundos y volvé a intentar.');
     }
   };
 
@@ -138,7 +149,19 @@ export default function App() {
   const handleRegisterPayment = async (paymentData) => {
     if (!payingProject) return;
     const projId = payingProject._id || payingProject.id;
-    const result = await registerPayment(projId, paymentData);
+    // A temp id means the project never got saved to the DB.
+    if (!projId || String(projId).startsWith('proj-')) {
+      alert('Este proyecto todavía no está guardado en el servidor. Recargá la página y volvé a abrirlo antes de registrar un pago.');
+      throw new Error('Proyecto sin id de base');
+    }
+    let result;
+    try {
+      result = await registerPayment(projId, paymentData);
+    } catch (err) {
+      console.error('Error registrando pago:', err);
+      alert('No se pudo registrar el pago. El servidor puede estar iniciando; esperá unos segundos y reintentá.');
+      throw err;
+    }
     // Keep the open detail modal in sync with the new collected totals.
     if (result?.project) {
       const updated = { ...result.project, id: result.project._id || result.project.id };

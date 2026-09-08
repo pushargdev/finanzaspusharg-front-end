@@ -1,5 +1,10 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://finanzaspusharg-back-end.onrender.com/api';
 
+// Wake the backend (Render free tier sleeps after inactivity). Fire-and-forget.
+export function wakeBackend() {
+  return fetch(`${API_BASE_URL}/health`).catch(() => {});
+}
+
 // Build headers including the Bearer token from the logged-in user (localStorage).
 function authHeaders(extra = {}) {
   const headers = { ...extra };
