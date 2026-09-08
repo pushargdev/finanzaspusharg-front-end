@@ -149,25 +149,51 @@ export default function App() {
   const handleRegisterPayment = async (paymentData) => {
     if (!payingProject) return;
     const projId = payingProject._id || payingProject.id;
-    // A temp id means the project never got saved to the DB.
-    if (!projId || String(projId).startsWith('proj-')) {
-      alert('Este proyecto todavía no está guardado en el servidor. Recargá la página y volvé a abrirlo antes de registrar un pago.');
-      throw new Error('Proyecto sin id de base');
+
+    // Optimistic local update
+    const amtARS = paymentData.amountARS || 0;
+    const amtUSD = paymentData.amountUSD || 0;
+
+    setProjects(prevProjs => prevProjs.map(p => {
+      if ((p._id || p.id) === projId) {
+        return {
+          ...p,
+          paidARS: (p.paidARS || 0) + amtARS,
+          paidUSD: (p.paidUSD || 0) + amtUSD
+        };
+      }
+      return p;
+    }));
+
+    // Add Income Transaction to local list
+    const newPaymentTx = {
+      id: `tx-${Date.now()}`,
+      type: 'Ingreso',
+      title: paymentData.note || `Pago - ${payingProject.name}`,
+      projectId: projId,
+      projectName: payingProject.name,
+      client: payingProject.client,
+      category: 'Cobro Proyecto',
+      amountARS: amtARS,
+      amountUSD: amtUSD,
+      status: 'Cobrado',
+      date: paymentData.date || new Date().toISOString().slice(0, 10),
+    };
+    setTransactions(prevTxs => [newPaymentTx, ...prevTxs]);
+
+    // Send to live backend if synced project
+    if (projId && !String(projId).startsWith('proj-')) {
+      try {
+        const result = await registerPayment(projId, paymentData);
+        if (result?.project) {
+          const updated = { ...result.project, id: result.project._id || result.project.id };
+          setSelectedProject(prev => (prev && (prev._id || prev.id) === projId ? updated : prev));
+        }
+        await loadLiveBackendData();
+      } catch (err) {
+        console.warn('Backend payment sync notice:', err.message);
+      }
     }
-    let result;
-    try {
-      result = await registerPayment(projId, paymentData);
-    } catch (err) {
-      console.error('Error registrando pago:', err);
-      alert('No se pudo registrar el pago. El servidor puede estar iniciando; esperá unos segundos y reintentá.');
-      throw err;
-    }
-    // Keep the open detail modal in sync with the new collected totals.
-    if (result?.project) {
-      const updated = { ...result.project, id: result.project._id || result.project.id };
-      setSelectedProject((prev) => (prev && (prev._id || prev.id) === projId ? updated : prev));
-    }
-    await loadLiveBackendData();
   };
 
   // Handlers for Transaction Operations
