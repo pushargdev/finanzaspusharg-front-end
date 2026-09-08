@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, User, CheckCircle2, Clock, Trash2, ArrowUpRight, ArrowDownLeft, FileText } from 'lucide-react';
+import { X, Calendar, User, CheckCircle2, Clock, Trash2, ArrowUpRight, ArrowDownLeft, FileText, Cpu, Layers, Users } from 'lucide-react';
 
 export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteProject, transactions, currency }) {
   if (!isOpen || !project) return null;
@@ -51,7 +51,13 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
             </div>
             <h2 className="text-2xl font-extrabold text-white">{project.name}</h2>
             <p className="text-xs text-slate-400 mt-1 flex items-center gap-4">
-              <span>Cliente: <strong className="text-slate-200">{project.client}</strong></span>
+              <span>
+                {project.clients && project.clients.length > 0 ? (
+                  <>{project.clients.length > 1 ? 'Clientes' : 'Cliente'}: <strong className="text-slate-200">{project.clients.map((c) => `${c.name}${c.lastName ? ` ${c.lastName}` : ''}`).join(', ')}</strong></>
+                ) : (
+                  <>Cliente: <strong className="text-slate-200">{project.client}{project.clientLastName ? ` ${project.clientLastName}` : ''}</strong></>
+                )}
+              </span>
               <span>•</span>
               <span>Entrega: <strong className="text-slate-200">{typeof project.deadline === 'string' ? project.deadline.slice(0, 10) : new Date(project.deadline).toISOString().slice(0, 10)}</strong></span>
             </p>
@@ -75,6 +81,64 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
         <p className="text-xs text-slate-300 bg-[#171F33] p-3.5 rounded-xl border border-slate-800">
           {project.description}
         </p>
+
+        {/* Platforms & Technologies */}
+        {((project.platforms && project.platforms.length > 0) || (project.technologies && project.technologies.length > 0)) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {project.platforms && project.platforms.length > 0 && (
+              <div className="p-4 rounded-xl bg-[#171F33] border border-slate-800">
+                <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5 mb-2">
+                  <Layers className="w-3.5 h-3.5 text-brand-magenta" /> Plataformas
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {project.platforms.map((p, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-md bg-brand-magenta/15 text-brand-magenta text-[11px] font-semibold">{p}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {project.technologies && project.technologies.length > 0 && (
+              <div className="p-4 rounded-xl bg-[#171F33] border border-slate-800">
+                <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5 mb-2">
+                  <Cpu className="w-3.5 h-3.5 text-brand-purple" /> Tecnologías
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {project.technologies.map((t, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-md bg-brand-purple/15 text-brand-purple text-[11px] font-semibold">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Contributions */}
+        {project.contributions && project.contributions.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Users className="w-4 h-4 text-brand-purple" />
+              <span>Aportes del Equipo</span>
+            </h3>
+            <div className="space-y-2">
+              {project.contributions.map((c, idx) => (
+                <div key={idx} className="flex items-start justify-between p-3 rounded-xl bg-[#171F33] border border-slate-800 text-xs gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-7 h-7 shrink-0 rounded-lg bg-brand-purple/20 text-brand-purple flex items-center justify-center font-bold uppercase">
+                      {c.member?.charAt(0) || '?'}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-bold text-white truncate">{c.member}</p>
+                      {c.description && <p className="text-[10px] text-slate-400 truncate">{c.description}</p>}
+                    </div>
+                  </div>
+                  {c.role && (
+                    <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-bold text-[10px] shrink-0">{c.role}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Financial KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
