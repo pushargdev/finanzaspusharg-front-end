@@ -18,9 +18,10 @@ import {
   fetchTransactions, 
   createProject, 
   deleteProject,
-  createTransaction, 
+  createTransaction,
   updateTransactionStatus,
-  deleteTransaction
+  deleteTransaction,
+  fetchDolar
 } from './services/api';
 
 export default function App() {
@@ -40,6 +41,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLiveConnected, setIsLiveConnected] = useState(false);
 
+  // Live "dólar blue" rate (real-time from backend). Fallback while loading.
+  const [dolar, setDolar] = useState({ promedio: 1280, venta: 1280, compra: 1280, fecha: null });
+  const dolarRate = dolar?.promedio || 1280;
+
   // Modals state
   const [isNewTxOpen, setIsNewTxOpen] = useState(false);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
@@ -51,6 +56,22 @@ export default function App() {
       loadLiveBackendData();
     }
   }, [currentUser]);
+
+  // Fetch the live dólar blue rate on mount and refresh every 5 minutes.
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const data = await fetchDolar();
+        if (active && data && data.promedio) setDolar(data);
+      } catch (err) {
+        console.error('Error al obtener cotización del dólar:', err);
+      }
+    };
+    load();
+    const id = setInterval(load, 5 * 60 * 1000);
+    return () => { active = false; clearInterval(id); };
+  }, []);
 
   const loadLiveBackendData = async () => {
     try {
@@ -166,6 +187,7 @@ export default function App() {
         onOpenNewProject={() => setIsNewProjectOpen(true)}
         currentUser={currentUser}
         onLogout={handleLogout}
+        dolar={dolar}
       />
 
       {/* Main Content Area */}
@@ -280,12 +302,14 @@ export default function App() {
         onClose={() => setIsNewTxOpen(false)}
         projects={projects}
         onAddTransaction={handleAddTransaction}
+        rate={dolarRate}
       />
 
       <ProjectModal
         isOpen={isNewProjectOpen}
         onClose={() => setIsNewProjectOpen(false)}
         onAddProject={handleAddProject}
+        rate={dolarRate}
       />
 
       <ProjectDetailModal
@@ -295,6 +319,7 @@ export default function App() {
         onDeleteProject={handleDeleteProject}
         transactions={transactions}
         currency={currency}
+        rate={dolarRate}
       />
     </div>
   );

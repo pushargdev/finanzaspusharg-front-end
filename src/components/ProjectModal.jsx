@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Layers, User, Calendar, DollarSign, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function ProjectModal({ isOpen, onClose, onAddProject }) {
+export default function ProjectModal({ isOpen, onClose, onAddProject, rate = 1280 }) {
   if (!isOpen) return null;
 
   const [name, setName] = useState('');
@@ -37,8 +37,8 @@ export default function ProjectModal({ isOpen, onClose, onAddProject }) {
 
     if (!name || clientList.length === 0) return;
 
-    const bARS = parseFloat(budgetARS) || (parseFloat(budgetUSD) * 1280 || 0);
-    const bUSD = parseFloat(budgetUSD) || (parseFloat(budgetARS) / 1280 || 0);
+    const bARS = parseFloat(budgetARS) || (parseFloat(budgetUSD) * rate || 0);
+    const bUSD = parseFloat(budgetUSD) || (parseFloat(budgetARS) / rate || 0);
 
     const techArr = technologies.split(',').map((t) => t.trim()).filter(Boolean);
     const platformArr = platforms.split(',').map((p) => p.trim()).filter(Boolean);

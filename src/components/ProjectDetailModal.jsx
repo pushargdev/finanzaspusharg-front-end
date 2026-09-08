@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Calendar, User, CheckCircle2, Clock, Trash2, ArrowUpRight, ArrowDownLeft, FileText, Cpu, Layers, Users } from 'lucide-react';
 
-export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteProject, transactions, currency }) {
+export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteProject, transactions, currency, rate = 1280 }) {
   if (!isOpen || !project) return null;
 
   const projectTxs = transactions.filter(t => t.projectId === project.id);
@@ -186,7 +186,7 @@ export default function ProjectDetailModal({ project, isOpen, onClose, onDeleteP
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="font-extrabold text-white">
-                    {formatMoney(m.amountARS, Math.round(m.amountARS / 1280))}
+                    {formatMoney(m.amountARS, Math.round(m.amountARS / rate))}
                   </span>
                   <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
                     m.status === 'Cobrado' 

@@ -3,7 +3,7 @@ import { X, PlusCircle, DollarSign, Calendar, Tag, User, Layers } from 'lucide-r
 import { CATEGORIES } from '../mockData';
 import confetti from 'canvas-confetti';
 
-export default function TransactionModal({ isOpen, onClose, projects, onAddTransaction }) {
+export default function TransactionModal({ isOpen, onClose, projects, onAddTransaction, rate = 1280 }) {
   if (!isOpen) return null;
 
   const [type, setType] = useState('Ingreso');
@@ -36,8 +36,8 @@ export default function TransactionModal({ isOpen, onClose, projects, onAddTrans
     if (!title || (!amountARS && !amountUSD)) return;
 
     const selectedProj = projects.find(p => p.id === projectId);
-    const numARS = parseFloat(amountARS) || (parseFloat(amountUSD) * 1280 || 0);
-    const numUSD = parseFloat(amountUSD) || (parseFloat(amountARS) / 1280 || 0);
+    const numARS = parseFloat(amountARS) || (parseFloat(amountUSD) * rate || 0);
+    const numUSD = parseFloat(amountUSD) || (parseFloat(amountARS) / rate || 0);
 
     const newTx = {
       id: `tx-${Date.now()}`,

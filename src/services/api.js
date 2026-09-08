@@ -122,6 +122,13 @@ export async function deleteTransaction(id) {
   return res.json();
 }
 
+// Dólar (público): cotización blue en tiempo real
+export async function fetchDolar() {
+  const res = await fetch(`${API_BASE_URL}/dolar`);
+  if (!res.ok) throw new Error('Error al obtener cotización del dólar');
+  return res.json();
+}
+
 // Analytics API
 export async function fetchKPIs() {
   const res = await fetch(`${API_BASE_URL}/analytics/kpis`, { headers: authHeaders() });

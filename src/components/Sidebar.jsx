@@ -13,7 +13,11 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNewProject, currentUser, onLogout }) {
+export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNewProject, currentUser, onLogout, dolar }) {
+  const rate = dolar?.promedio || currentUser?.dolarBlueRate || 1280;
+  const rateTime = dolar?.fecha
+    ? new Date(dolar.fecha).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    : null;
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard General', icon: LayoutDashboard, badge: null },
     { id: 'projects', label: 'Proyectos & Cuentas', icon: FolderKanban, badge: '5 Activos' },
@@ -105,19 +109,20 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNe
 
       {/* Bottom Info & User Widget */}
       <div className="p-4 space-y-3">
-        {/* Mock Live Exchange Rate Widget */}
+        {/* Live Exchange Rate Widget (dólar blue en tiempo real) */}
         <div className="p-3.5 rounded-xl bg-[#161E31] border border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <DollarSign className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-400">Dólar Blue (Ref)</p>
-              <p className="text-xs font-bold text-white">${currentUser?.dolarBlueRate || 1280} ARS</p>
+              <p className="text-[11px] font-semibold text-slate-400">Dólar Blue (vivo)</p>
+              <p className="text-xs font-bold text-white">${rate.toLocaleString('es-AR')} ARS</p>
+              {rateTime && <p className="text-[9px] text-slate-500">act. {rateTime}</p>}
             </div>
           </div>
           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
-            <ArrowUpRight className="w-3 h-3" /> +1.2%
+            <ArrowUpRight className="w-3 h-3" /> vivo
           </span>
         </div>
 
