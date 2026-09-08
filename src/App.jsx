@@ -18,6 +18,7 @@ import {
   fetchProjects, 
   fetchTransactions, 
   createProject, 
+  updateProject,
   deleteProject,
   createTransaction,
   updateTransactionStatus,
@@ -51,6 +52,7 @@ export default function App() {
   // Modals state
   const [isNewTxOpen, setIsNewTxOpen] = useState(false);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [payingProject, setPayingProject] = useState(null);
 
@@ -133,6 +135,22 @@ export default function App() {
       console.error('Error saving project to backend:', err);
       setProjects((prev) => prev.filter((p) => p.id !== newProj.id));
       alert('No se pudo guardar el proyecto. El servidor puede estar iniciando (se duerme tras un rato sin uso). Esperá unos segundos y volvé a intentar.');
+    }
+  };
+
+  const handleUpdateProject = async (projId, updatedData) => {
+    setProjects(prev => prev.map(p => ((p.id === projId || p._id === projId) ? { ...p, ...updatedData } : p)));
+    if (selectedProject && (selectedProject.id === projId || selectedProject._id === projId)) {
+      setSelectedProject(prev => ({ ...prev, ...updatedData }));
+    }
+
+    if (projId && !String(projId).startsWith('proj-')) {
+      try {
+        await updateProject(projId, updatedData);
+        await loadLiveBackendData();
+      } catch (err) {
+        console.error('Error updating project on backend:', err);
+      }
     }
   };
 
@@ -299,6 +317,7 @@ export default function App() {
                   currency={currency}
                   onSelectProject={setSelectedProject}
                   onOpenNewProject={() => setIsNewProjectOpen(true)}
+                  onEditProject={(proj) => setEditingProject(proj)}
                 />
               </div>
             </div>
@@ -312,6 +331,7 @@ export default function App() {
                 currency={currency}
                 onSelectProject={setSelectedProject}
                 onOpenNewProject={() => setIsNewProjectOpen(true)}
+                onEditProject={(proj) => setEditingProject(proj)}
               />
             </div>
           )}
@@ -370,9 +390,14 @@ export default function App() {
       />
 
       <ProjectModal
-        isOpen={isNewProjectOpen}
-        onClose={() => setIsNewProjectOpen(false)}
+        isOpen={isNewProjectOpen || !!editingProject}
+        projectToEdit={editingProject}
+        onClose={() => {
+          setIsNewProjectOpen(false);
+          setEditingProject(null);
+        }}
         onAddProject={handleAddProject}
+        onUpdateProject={handleUpdateProject}
         rate={dolarRate}
       />
 
@@ -381,6 +406,7 @@ export default function App() {
         isOpen={!!selectedProject}
         onClose={() => setSelectedProject(null)}
         onDeleteProject={handleDeleteProject}
+        onEditProject={(proj) => setEditingProject(proj)}
         onRegisterPayment={(proj) => setPayingProject(proj)}
         transactions={transactions}
         currency={currency}

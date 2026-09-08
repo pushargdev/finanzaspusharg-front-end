@@ -7,10 +7,13 @@ import {
   Clock, 
   AlertCircle, 
   Plus, 
-  ChevronRight
+  ChevronRight,
+  Edit3,
+  Wrench,
+  FileText
 } from 'lucide-react';
 
-export default function ProjectsGrid({ projects, currency, onSelectProject, onOpenNewProject }) {
+export default function ProjectsGrid({ projects, currency, onSelectProject, onOpenNewProject, onEditProject }) {
   const [filterCategory, setFilterCategory] = useState('Todos');
 
   const categories = ['Todos', 'Desarrollo Mobile', 'Fullstack Web', 'Branding & UI/UX', 'Desarrollo Web', 'Backend & API'];
@@ -93,6 +96,7 @@ export default function ProjectsGrid({ projects, currency, onSelectProject, onOp
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProjects.map((project) => {
+          const projId = project.id || project._id;
           const pendingARS = Math.max(0, project.budgetARS - project.paidARS);
           const pendingUSD = Math.max(0, project.budgetUSD - project.paidUSD);
 
@@ -103,31 +107,70 @@ export default function ProjectsGrid({ projects, currency, onSelectProject, onOp
           const isFullyPaid = pendingUSD <= 0 || pendingARS <= 0 || rawRatio >= 99.5;
           const paidRatio = isFullyPaid ? 100 : Math.min(Math.round(rawRatio), 100);
 
+          const hasContract = project.hasContract || project.contractStatus === 'Con Contrato / Firmado';
+          const contractStatus = project.contractStatus || (hasContract ? 'Con Contrato' : 'Sin Contrato');
+          const hasMaintenance = project.hasMaintenance;
+          const maintPct = project.maintenancePercentage || 10;
+          const maintUSD = project.maintenanceAmountUSD || Math.round(project.budgetUSD * (maintPct / 100));
+
           return (
             <div
-              key={project.id}
+              key={projId}
               onClick={() => onSelectProject(project)}
               className="p-6 rounded-2xl bg-[#121827] border border-slate-800 hover:border-brand-purple/50 transition-all duration-300 cursor-pointer group flex flex-col justify-between relative overflow-hidden shadow-md"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-brand-purple/5 rounded-bl-full pointer-events-none group-hover:bg-brand-purple/10 transition-all"></div>
 
               <div>
-                {/* Status & Category */}
+                {/* Status & Category Header */}
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800/80 px-2.5 py-0.5 rounded-md border border-slate-700/50">
                     {project.category}
                   </span>
-                  {getStatusBadge(project.status, isFullyPaid)}
+                  <div className="flex items-center gap-1.5">
+                    {onEditProject && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditProject(project);
+                        }}
+                        className="p-1 rounded-lg text-slate-400 hover:text-brand-purple hover:bg-brand-purple/10 transition-colors"
+                        title="Editar proyecto"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {getStatusBadge(project.status, isFullyPaid)}
+                  </div>
                 </div>
 
                 {/* Title & Client */}
                 <h3 className="text-lg font-extrabold text-white group-hover:text-brand-purple transition-colors mb-1">
                   {project.name}
                 </h3>
-                <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-4">
+                <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-3">
                   <User className="w-3.5 h-3.5 text-brand-magenta" />
                   <span>Cliente: <strong className="text-slate-200">{project.client}</strong></span>
                 </p>
+
+                {/* Contract & Maintenance Badges */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                  {hasContract ? (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30 flex items-center gap-1">
+                      📜 Contrato
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-800/80 text-slate-500 border border-slate-800">
+                      🚫 Sin Contrato
+                    </span>
+                  )}
+
+                  {hasMaintenance ? (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-brand-magenta/15 text-brand-magenta border border-brand-magenta/30 flex items-center gap-1">
+                      <Wrench className="w-3 h-3" /> Mant. {maintPct}% (${maintUSD} USD/m)
+                    </span>
+                  ) : null}
+                </div>
 
                 {/* Progress Bar */}
                 <div className="mb-4 space-y-1.5">
