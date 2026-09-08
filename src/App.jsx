@@ -138,7 +138,12 @@ export default function App() {
   const handleRegisterPayment = async (paymentData) => {
     if (!payingProject) return;
     const projId = payingProject._id || payingProject.id;
-    await registerPayment(projId, paymentData);
+    const result = await registerPayment(projId, paymentData);
+    // Keep the open detail modal in sync with the new collected totals.
+    if (result?.project) {
+      const updated = { ...result.project, id: result.project._id || result.project.id };
+      setSelectedProject((prev) => (prev && (prev._id || prev.id) === projId ? updated : prev));
+    }
     await loadLiveBackendData();
   };
 
