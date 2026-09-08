@@ -104,10 +104,13 @@ export default function ProjectModal({ isOpen, onClose, onAddProject, onUpdatePr
   const addClient = () => setClients((prev) => [...prev, { name: '', lastName: '' }]);
   const removeClient = (index) => setClients((prev) => prev.filter((_, i) => i !== index));
 
+  // Helper to parse float percentages supporting both dot and comma
+  const parsePct = (val) => parseFloat(String(val || 0).replace(',', '.')) || 0;
+
   // Dynamic calculated maintenance amounts
   const bARSNum = parseFloat(budgetARS) || (parseFloat(budgetUSD) * rate || 0);
   const bUSDNum = parseFloat(budgetUSD) || (parseFloat(budgetARS) / rate || 0);
-  const maintPctNum = parseFloat(maintenancePercentage) || 0;
+  const maintPctNum = parsePct(maintenancePercentage);
 
   const calculatedMaintARS = hasMaintenance ? Math.round(bARSNum * (maintPctNum / 100)) : 0;
   const calculatedMaintUSD = hasMaintenance ? Math.round(bUSDNum * (maintPctNum / 100)) : 0;
@@ -328,11 +331,12 @@ export default function ProjectModal({ isOpen, onClose, onAddProject, onUpdatePr
                     <div className="relative">
                       <input
                         type="number"
-                        min="1"
+                        step="any"
+                        min="0"
                         max="100"
                         value={maintenancePercentage}
                         onChange={(e) => setMaintenancePercentage(e.target.value)}
-                        placeholder="Ej: 10"
+                        placeholder="Ej: 3.75"
                         className="w-full px-3 py-1.5 bg-[#121827] border border-slate-700 rounded-lg text-white outline-none focus:border-brand-magenta pr-7"
                       />
                       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
