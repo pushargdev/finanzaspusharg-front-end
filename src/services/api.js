@@ -1,5 +1,39 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://finanzaspusharg-back-end.onrender.com/api';
 
+// Auth API
+export async function loginUser(email, password) {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Error al iniciar sesión');
+  return data;
+}
+
+export async function registerUser(name, email, password) {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Error al registrarse');
+  return data;
+}
+
+export async function updateUserProfile(profileData) {
+  const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(profileData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Error al actualizar perfil');
+  return data;
+}
+
 // Projects API
 export async function fetchProjects() {
   const res = await fetch(`${API_BASE_URL}/projects`);

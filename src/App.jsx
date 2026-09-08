@@ -8,6 +8,8 @@ import TransactionTable from './components/TransactionTable';
 import TransactionModal from './components/TransactionModal';
 import ProjectModal from './components/ProjectModal';
 import ProjectDetailModal from './components/ProjectDetailModal';
+import LoginScreen from './components/LoginScreen';
+import UserSettings from './components/UserSettings';
 
 import { INITIAL_PROJECTS, INITIAL_TRANSACTIONS } from './mockData';
 import { 
@@ -21,8 +23,14 @@ import {
 } from './services/api';
 
 export default function App() {
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('pusharg_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currency, setCurrency] = useState('ARS');
+  const [currency, setCurrency] = useState(currentUser?.defaultCurrency || 'ARS');
   const [searchTerm, setSearchTerm] = useState('');
 
   // State arrays for live/mock data
@@ -36,10 +44,12 @@ export default function App() {
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  // Fetch real-time data from Render API on mount
+  // Fetch real-time data from Render API on mount if logged in
   useEffect(() => {
-    loadLiveBackendData();
-  }, []);
+    if (currentUser) {
+      loadLiveBackendData();
+    }
+  }, [currentUser]);
 
   const loadLiveBackendData = async () => {
     try {
@@ -66,6 +76,17 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLoginSuccess = (userData) => {
+    setCurrentUser(userData);
+    localStorage.setItem('pusharg_user', JSON.stringify(userData));
+    if (userData.defaultCurrency) setCurrency(userData.defaultCurrency);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('pusharg_user');
   };
 
   // Handlers for Project Operations
@@ -129,6 +150,11 @@ export default function App() {
     }
   };
 
+  // If not logged in, render LoginScreen
+  if (!currentUser) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="flex min-h-screen bg-[#0B0E17] text-slate-100 font-sans selection:bg-brand-purple selection:text-white">
       {/* Sidebar */}
@@ -137,6 +163,8 @@ export default function App() {
         setActiveTab={setActiveTab}
         onOpenNewTx={() => setIsNewTxOpen(true)}
         onOpenNewProject={() => setIsNewProjectOpen(true)}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -221,6 +249,17 @@ export default function App() {
               <KpiCards transactions={transactions} projects={projects} currency={currency} />
               <ChartsSection transactions={transactions} projects={projects} currency={currency} />
             </div>
+          )}
+
+          {/* User Settings Tab */}
+          {activeTab === 'settings' && (
+            <UserSettings
+              currentUser={currentUser}
+              setCurrentUser={(updated) => {
+                setCurrentUser(updated);
+                localStorage.setItem('pusharg_user', JSON.stringify(updated));
+              }}
+            />
           )}
         </main>
       </div>

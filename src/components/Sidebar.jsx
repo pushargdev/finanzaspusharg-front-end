@@ -4,21 +4,26 @@ import {
   FolderKanban, 
   Receipt, 
   TrendingUp, 
+  Settings,
   PlusCircle, 
   DollarSign, 
-  ChevronRight,
-  Sparkles,
+  LogOut,
   Layers,
   ArrowUpRight
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNewProject }) {
+export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNewProject, currentUser, onLogout }) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard General', icon: LayoutDashboard, badge: null },
     { id: 'projects', label: 'Proyectos & Cuentas', icon: FolderKanban, badge: '5 Activos' },
     { id: 'transactions', label: 'Historial & Pagos', icon: Receipt, badge: null },
     { id: 'analytics', label: 'Análisis & Métricas', icon: TrendingUp, badge: 'PRO' },
+    { id: 'settings', label: 'Configuración', icon: Settings, badge: null },
   ];
+
+  const userName = currentUser?.name || 'pushArg Studio';
+  const userEmail = currentUser?.email || 'admin@pusharg.com';
+  const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
     <aside className="w-72 bg-[#0E1322] border-r border-[#1E293B] flex flex-col justify-between shrink-0 select-none">
@@ -106,7 +111,7 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNe
             </div>
             <div>
               <p className="text-[11px] font-semibold text-slate-400">Dólar Blue (Ref)</p>
-              <p className="text-xs font-bold text-white">$1.280 ARS</p>
+              <p className="text-xs font-bold text-white">${currentUser?.dolarBlueRate || 1280} ARS</p>
             </div>
           </div>
           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
@@ -116,18 +121,25 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNe
 
         {/* User Card */}
         <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-violet to-brand-magenta p-0.5">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-violet to-brand-magenta p-0.5 shrink-0">
               <div className="w-full h-full rounded-full bg-[#0F172A] flex items-center justify-center font-bold text-xs text-white">
-                PA
+                {userInitials}
               </div>
             </div>
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-slate-200 truncate">pushArg Studio</p>
-              <p className="text-[10px] text-slate-400 truncate">admin@pusharg.com</p>
+              <p className="text-xs font-bold text-slate-200 truncate">{userName}</p>
+              <p className="text-[10px] text-slate-400 truncate">{userEmail}</p>
             </div>
           </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+
+          <button
+            onClick={onLogout}
+            className="p-2 rounded-xl bg-[#161E31] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
+            title="Cerrar Sesión"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>
