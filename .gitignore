@@ -1,6 +1,7 @@
 # Build artifacts
 dist/
 dist-ssr/
+release/
 *.local
 
 # Dependencies
