@@ -18,9 +18,23 @@ export default function ClientsView({ projects, transactions, currency }) {
   const [selectedClient, setSelectedClient] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const formatMoney = (valARS, valUSD) => {
-    if (currency === 'USD') return `$${valUSD.toLocaleString('en-US')} USD`;
-    return `$${valARS.toLocaleString('es-AR')} ARS`;
+  const formatDualMoney = (valARS, valUSD) => {
+    const strARS = `$${Math.round(valARS || 0).toLocaleString('es-AR')} ARS`;
+    const strUSD = `$${Math.round(valUSD || 0).toLocaleString('en-US')} USD`;
+    if (currency === 'USD') {
+      return (
+        <div>
+          <span className="font-extrabold text-sm block">{strUSD}</span>
+          <span className="text-[10px] text-slate-400 font-medium block">{strARS}</span>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <span className="font-extrabold text-sm block">{strARS}</span>
+        <span className="text-[10px] text-slate-400 font-medium block">{strUSD}</span>
+      </div>
+    );
   };
 
   // Group projects & transactions by client name
@@ -133,15 +147,13 @@ export default function ClientsView({ projects, transactions, currency }) {
               <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[#171F33] border border-slate-800 text-xs">
                 <div>
                   <span className="text-[11px] text-slate-400 block font-medium">Total Facturado</span>
-                  <span className="font-extrabold text-white">
-                    {formatMoney(client.totalBilledARS, client.totalBilledUSD)}
-                  </span>
+                  {formatDualMoney(client.totalBilledARS, client.totalBilledUSD)}
                 </div>
                 <div>
                   <span className="text-[11px] text-slate-400 block font-medium">Deuda Pendiente</span>
-                  <span className={`font-extrabold ${client.pendingARS > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                    {formatMoney(client.pendingARS, client.pendingUSD)}
-                  </span>
+                  <div className={client.pendingARS > 0 ? 'text-amber-400' : 'text-emerald-400'}>
+                    {formatDualMoney(client.pendingARS, client.pendingUSD)}
+                  </div>
                 </div>
               </div>
 
@@ -182,23 +194,21 @@ export default function ClientsView({ projects, transactions, currency }) {
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 rounded-xl bg-[#171F33] border border-slate-800 text-xs">
                 <span className="text-slate-400 block font-semibold mb-1">Total Facturado</span>
-                <span className="text-lg font-extrabold text-white">
-                  {formatMoney(selectedClient.totalBilledARS, selectedClient.totalBilledUSD)}
-                </span>
+                {formatDualMoney(selectedClient.totalBilledARS, selectedClient.totalBilledUSD)}
               </div>
 
               <div className="p-4 rounded-xl bg-[#171F33] border border-emerald-500/30 text-xs">
                 <span className="text-emerald-400 block font-semibold mb-1">Total Cobrado</span>
-                <span className="text-lg font-extrabold text-emerald-400">
-                  {formatMoney(selectedClient.totalPaidARS, selectedClient.totalPaidUSD)}
-                </span>
+                <div className="text-emerald-400">
+                  {formatDualMoney(selectedClient.totalPaidARS, selectedClient.totalPaidUSD)}
+                </div>
               </div>
 
               <div className="p-4 rounded-xl bg-[#171F33] border border-amber-500/30 text-xs">
                 <span className="text-amber-400 block font-semibold mb-1">Saldo Pendiente</span>
-                <span className="text-lg font-extrabold text-amber-400">
-                  {formatMoney(selectedClient.pendingARS, selectedClient.pendingUSD)}
-                </span>
+                <div className="text-amber-400">
+                  {formatDualMoney(selectedClient.pendingARS, selectedClient.pendingUSD)}
+                </div>
               </div>
             </div>
 
@@ -215,9 +225,7 @@ export default function ClientsView({ projects, transactions, currency }) {
                       <p className="font-bold text-white">{p.name}</p>
                       <p className="text-[10px] text-slate-400">{p.category} • Estado: {p.status}</p>
                     </div>
-                    <span className="font-extrabold text-white">
-                      {formatMoney(p.budgetARS, p.budgetUSD)}
-                    </span>
+                    {formatDualMoney(p.budgetARS, p.budgetUSD)}
                   </div>
                 ))}
               </div>
@@ -236,9 +244,9 @@ export default function ClientsView({ projects, transactions, currency }) {
                       <p className="font-bold text-white">{t.title}</p>
                       <p className="text-[10px] text-slate-400">{t.date} • {t.invoice}</p>
                     </div>
-                    <span className="font-extrabold text-emerald-400">
-                      +{formatMoney(t.amountARS, t.amountUSD)}
-                    </span>
+                    <div className="text-emerald-400">
+                      {formatDualMoney(t.amountARS, t.amountUSD)}
+                    </div>
                   </div>
                 ))}
               </div>

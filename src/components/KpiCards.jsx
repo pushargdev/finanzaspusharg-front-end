@@ -11,11 +11,23 @@ import {
 
 export default function KpiCards({ transactions, projects, currency }) {
   // Calculations
-  const formatMoney = (valARS, valUSD) => {
+  const formatDualMoney = (valARS, valUSD) => {
+    const strARS = `$${Math.round(valARS || 0).toLocaleString('es-AR')} ARS`;
+    const strUSD = `$${Math.round(valUSD || 0).toLocaleString('en-US')} USD`;
     if (currency === 'USD') {
-      return `$${valUSD.toLocaleString('en-US')} USD`;
+      return (
+        <div>
+          <h3 className="text-2xl font-extrabold text-white tracking-tight">{strUSD}</h3>
+          <span className="text-xs font-bold text-slate-400 block mt-0.5">{strARS}</span>
+        </div>
+      );
     }
-    return `$${valARS.toLocaleString('es-AR')} ARS`;
+    return (
+      <div>
+        <h3 className="text-2xl font-extrabold text-white tracking-tight">{strARS}</h3>
+        <span className="text-xs font-bold text-slate-400 block mt-0.5">{strUSD}</span>
+      </div>
+    );
   };
 
   const totalIncomeARS = transactions
@@ -45,7 +57,7 @@ export default function KpiCards({ transactions, projects, currency }) {
   const cards = [
     {
       title: 'Ingresos Totales (Cobrados)',
-      value: formatMoney(totalIncomeARS, totalIncomeUSD),
+      value: formatDualMoney(totalIncomeARS, totalIncomeUSD),
       subtitle: '+18.4% vs mes anterior',
       icon: TrendingUp,
       iconColor: 'text-emerald-400',
@@ -56,7 +68,7 @@ export default function KpiCards({ transactions, projects, currency }) {
     },
     {
       title: 'Gastos u Operación',
-      value: formatMoney(totalExpenseARS, totalExpenseUSD),
+      value: formatDualMoney(totalExpenseARS, totalExpenseUSD),
       subtitle: 'Herramientas & Devs',
       icon: TrendingDown,
       iconColor: 'text-rose-400',
@@ -67,7 +79,7 @@ export default function KpiCards({ transactions, projects, currency }) {
     },
     {
       title: 'Balance Neto (Profit)',
-      value: formatMoney(netBalanceARS, netBalanceUSD),
+      value: formatDualMoney(netBalanceARS, netBalanceUSD),
       subtitle: `Margen Neto: ${marginPercentage}%`,
       icon: Wallet,
       iconColor: 'text-brand-purple',
@@ -78,7 +90,7 @@ export default function KpiCards({ transactions, projects, currency }) {
     },
     {
       title: 'Pendiente de Cobro',
-      value: formatMoney(pendingReceivablesARS, pendingReceivablesUSD),
+      value: formatDualMoney(pendingReceivablesARS, pendingReceivablesUSD),
       subtitle: 'Por hitos pendientes de entrega',
       icon: Clock,
       iconColor: 'text-amber-400',
@@ -108,7 +120,7 @@ export default function KpiCards({ transactions, projects, currency }) {
             </div>
 
             <div className="mb-2">
-              <h3 className="text-2xl font-extrabold text-white tracking-tight">{card.value}</h3>
+              {card.value}
             </div>
 
             <div className="flex items-center justify-between text-xs">
