@@ -10,6 +10,7 @@ import ProjectModal from './components/ProjectModal';
 import ProjectDetailModal from './components/ProjectDetailModal';
 import LoginScreen from './components/LoginScreen';
 import UserSettings from './components/UserSettings';
+import ClientsView from './components/ClientsView';
 
 import { INITIAL_PROJECTS, INITIAL_TRANSACTIONS } from './mockData';
 import { 
@@ -227,6 +228,15 @@ export default function App() {
                 onOpenNewProject={() => setIsNewProjectOpen(true)}
               />
             </div>
+          )}
+
+          {/* Clients Tab */}
+          {activeTab === 'clients' && (
+            <ClientsView
+              projects={projects}
+              transactions={transactions}
+              currency={currency}
+            />
           )}
 
           {/* Transactions Tab */}

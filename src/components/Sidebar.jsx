@@ -2,6 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   FolderKanban, 
+  Users,
   Receipt, 
   TrendingUp, 
   Settings,
@@ -16,6 +17,7 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenNewTx, onOpenNe
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard General', icon: LayoutDashboard, badge: null },
     { id: 'projects', label: 'Proyectos & Cuentas', icon: FolderKanban, badge: '5 Activos' },
+    { id: 'clients', label: 'Clientes & Empresas', icon: Users, badge: null },
     { id: 'transactions', label: 'Historial & Pagos', icon: Receipt, badge: null },
     { id: 'analytics', label: 'Análisis & Métricas', icon: TrendingUp, badge: 'PRO' },
     { id: 'settings', label: 'Configuración', icon: Settings, badge: null },
